@@ -18,7 +18,7 @@
     "@abaplint/transpiler-cli": "^1.8.34",
     "@abaplint/transpiler": "^1.8.34",
     "@abaplint/cli": "^2.86.6",
-    "@abaplint/runtime": "^1.8.33"
+    "@abaplint/runtime": "^1.8.34"
   },
   "author": "",
   "license": "ISC",

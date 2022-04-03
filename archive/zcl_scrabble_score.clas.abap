@@ -1,33 +1,50 @@
 CLASS zcl_scrabble_score DEFINITION PUBLIC .
 
   PUBLIC SECTION.
-    METHODS score
-      IMPORTING
-        input         TYPE string OPTIONAL
-      RETURNING
-        VALUE(result) TYPE i.
+    METHODS: score
+               IMPORTING input         TYPE string OPTIONAL
+               RETURNING VALUE(result) TYPE i.
   PROTECTED SECTION.
   PRIVATE SECTION.
+    TYPES: BEGIN OF ty_scores,
+             letters(10)    TYPE c,
+             score          TYPE i,
+           END  OF ty_scores.
+    DATA: defined_scores TYPE STANDARD TABLE OF ty_scores.
+    DATA: def_score  TYPE ty_scores.
 
 ENDCLASS.
 
-
 CLASS zcl_scrabble_score IMPLEMENTATION.
-  
+
   METHOD score.
-    result =
-  REDUCE string( INIT s = 0
-                 FOR  i = 0 WHILE i < strlen( input )
-                 NEXT s += COND i( LET current_val = to_upper( input+i(1) ) IN
-                 WHEN contains( val = 'AEIOULNRST' sub = current_val ) THEN 1
-                 WHEN contains( val = 'DG' sub = current_val ) THEN 2
-                 WHEN contains( val = 'BCMP' sub = current_val ) THEN 3
-                 WHEN contains( val = 'FHVWY' sub = current_val ) THEN 4
-                 WHEN contains( val = 'K' sub = current_val ) THEN 5
-                 WHEN contains( val = 'JX' sub = current_val ) THEN 8
-                 WHEN contains( val = 'QZ' sub = current_val ) THEN 10
-                 ELSE 0
-                 ) ).
+    DATA: letter(1) TYPE c,
+           clen      TYPE i.
+
+    CHECK input IS NOT INITIAL.
+
+    defined_scores = VALUE #( ( letters = 'AEIOULNRST' score = 1 )
+                       ( letters = 'DG' score = 2 )
+                       ( letters = 'BCMP' score = 3 )
+                       ( letters = 'FHVWY' score = 4 )
+                       ( letters = 'K' score = 5 )
+                       ( letters = 'JX' score = 8 )
+                       ( letters = 'QZ' score = 10 ) ).
+
+    "DESCRIBE FIELD input LENGTH DATA(clen) IN CHARACTER MODE.
+    clen = strlen( input ).
+
+    DO clen TIMES.
+      letter = input+sy-index(1).  "substring( val = input off = sy-index len = 1 ).
+      LOOP AT defined_scores INTO DATA(letterscore).
+        FIND letter IN letterscore-letters.
+        IF sy-subrc EQ 0.
+          result = result + letterscore-score.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+    ENDDO.
+
   ENDMETHOD.
 
 ENDCLASS.
