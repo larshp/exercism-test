@@ -1,106 +1,61 @@
 CLASS zcl_minesweeper DEFINITION PUBLIC FINAL CREATE PUBLIC.
 
   PUBLIC SECTION.
-    TYPES: ty_char1 TYPE c LENGTH 1.
 
     METHODS annotate
-      IMPORTING
-        !input        TYPE string_table
-      RETURNING
-        VALUE(result) TYPE string_table.
-
-    METHODS one_if_cell_is_a_star
-      IMPORTING
-        !row          TYPE i
-        !column       TYPE i
-      RETURNING
-        VALUE(result) TYPE i.
-
-    METHODS read_cell
-      IMPORTING
-        !row          TYPE i
-        !column       TYPE i
-      RETURNING
-        VALUE(result) TYPE string.
-
-    METHODS change_cell
-      IMPORTING
-        !row    TYPE i
-        !column TYPE i
-        !value  TYPE ty_char1.
-
-    DATA: input TYPE string_table.
+        IMPORTING
+          !input        TYPE string_table
+        RETURNING
+          VALUE(result) TYPE string_table.
+  PRIVATE SECTION.
 
 ENDCLASS.
 
 CLASS zcl_minesweeper IMPLEMENTATION.
 
   METHOD annotate.
-    TYPES: ty_integers TYPE STANDARD TABLE OF i WITH EMPTY KEY.
-
-    me->input = input.
-
-    TRY.
-
-        DATA(rows) = VALUE ty_integers( FOR i = 1 WHILE i <= lines( input ) ( i ) ).
-        DATA(count_columns) = strlen( input[ 1 ] ).
-        DATA(columns) = VALUE ty_integers( FOR j = 1 WHILE j <= count_columns ( j ) ).
-
-        LOOP AT rows INTO DATA(row).
-          LOOP AT columns INTO DATA(column).
-            IF read_cell( row = row column = column ) = ` `.
-              DATA(count_adjacent_mines) = one_if_cell_is_a_star( row = row - 1 column = column - 1 )
-                                         + one_if_cell_is_a_star( row = row - 1 column = column )
-                                         + one_if_cell_is_a_star( row = row - 1 column = column + 1 )
-                                         + one_if_cell_is_a_star( row = row     column = column - 1 )
-                                         + one_if_cell_is_a_star( row = row     column = column + 1 )
-                                         + one_if_cell_is_a_star( row = row + 1 column = column - 1 )
-                                         + one_if_cell_is_a_star( row = row + 1 column = column )
-                                         + one_if_cell_is_a_star( row = row + 1 column = column + 1 ).
-              IF count_adjacent_mines > 0.
-                change_cell( row = row column = column value = |{ count_adjacent_mines }| ).
+    FIELD-SYMBOLS <other_line> TYPE string.
+    FIELD-SYMBOLS <current_line> TYPE string.
+    result = input.
+*   Working from each mine outwards - adding 1 to each adjacent field that is not a mine
+    LOOP AT result ASSIGNING <current_line>.
+      CHECK <current_line> CA '*'.
+      DATA(current_row) = sy-tabix.
+*     start one row up
+      DO strlen( <current_line> ) TIMES.
+        DATA(row) = current_row - 1.
+        DATA(current_off) = sy-index - 1.
+        CHECK substring( val = <current_line> off = current_off len = 1 ) EQ '*'.
+        DO 3 TIMES.
+*         for each row, start one character to the left from current
+          DATA(off) = current_off - 1.
+*         "one row up, same row and one row down - if row exists
+          READ TABLE result INDEX row ASSIGNING <other_line>.
+          IF sy-subrc EQ 0.
+            DO 3 TIMES.
+*             except current character
+              IF row NE current_row OR off NE current_off.
+*               check bounds by catching exception
+                TRY.
+*                 Expecting to throw exception, when offset out of bounds. 
+                    DATA(current_field) = substring( val = <other_line> off = off len = 1 ).                       "<<<<<
+                    IF current_field NE '*'.
+                      DATA(cn_mines) = CONV i( substring( val = <other_line> off = off len = 1 ) ).                "<<<<<
+                      cn_mines = cn_mines + 1.
+                      <other_line> = replace( val = <other_line> off = off len = 1 with = |{ cn_mines }| ).        "<<<<<
+                    ENDIF.
+                  CATCH cx_sy_range_out_of_bounds.
+*                  out of bounds - nothing to do
+                ENDTRY.
               ENDIF.
-            ENDIF.
-          ENDLOOP.
-        ENDLOOP.
-
-      CATCH cx_root INTO DATA(error).
-        " invalid grid
-        ASSERT 1 = 1. " debug helper
-    ENDTRY.
-
-    result = me->input.
-
-  ENDMETHOD.
-
-  METHOD one_if_cell_is_a_star.
-
-    IF read_cell( row = row column = column ) = '*'.
-      result = 1.
-    ELSE.
-      result = 0.
-    ENDIF.
-
-  ENDMETHOD.
-
-  METHOD read_cell.
-
-    IF row < 1 OR row > lines( input )
-        OR column < 1 OR column > strlen( input[ row ] ).
-      result = ` `.
-    ELSE.
-      result = substring( val = input[ row ] off = column - 1 len = 1 ).
-    ENDIF.
-
-  ENDMETHOD.
-
-  METHOD change_cell.
-
-    ASSIGN input[ row ] TO FIELD-SYMBOL(<line>).
-    <line> = substring( val = <line> len = column - 1 )
-          && value
-          && substring( val = <line> off = column len = strlen( <line> ) - column ).
-
+              off = off + 1.
+            ENDDO.
+          ENDIF.
+*         row does not exist - try the next
+          row = row + 1.
+        ENDDO.
+      ENDDO.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.
