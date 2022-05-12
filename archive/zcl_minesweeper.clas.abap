@@ -7,38 +7,81 @@ CLASS zcl_minesweeper DEFINITION PUBLIC FINAL CREATE PUBLIC.
         !input        TYPE string_table
       RETURNING
         VALUE(result) TYPE string_table.
+
 ENDCLASS.
+
+
 
 CLASS zcl_minesweeper IMPLEMENTATION.
   METHOD annotate.
-    LOOP AT input INTO DATA(input_row).
-      DATA(output_row) = ``.
-      DO strlen( input_row ) TIMES.
-        DATA(input_char) = substring( val = input_row off = sy-index - 1 len = 1 ).
-        IF input_char = ` `.
-          DATA(mines_found) = 0.
-          DATA(current_char_row) = sy-tabix.
-          DATA(current_char_pos) = sy-index - 1.
-          DO 3 TIMES. "Iterate => Upper row then current row then row below
-            DATA(row_pos) = current_char_row + sy-index - 2.
-            DO 3 TIMES. "Iterate => Left character position then center then right
-              DATA(char_pos) = current_char_pos + sy-index - 2.
-              TRY .
-                  DATA(content) = input[ row_pos ].
-                  mines_found += COND #( WHEN content+char_pos(1) = '*' THEN 1 ).
-                CATCH cx_root.
-              ENDTRY.
-            ENDDO.
-          ENDDO.
-          DATA(output_char) = COND #( WHEN mines_found > 0
-                                      THEN condense( CONV string( mines_found ) ) ).
+
+    DATA n TYPE n LENGTH 1.
+    DATA res TYPE string.
+
+    CONCATENATE LINES OF input INTO DATA(field) RESPECTING BLANKS.
+    DATA(count) = strlen( field ).
+    DATA(rows) = lines( input ).
+    DATA(cols) = count DIV rows.
+
+    DO rows TIMES.
+      DATA(row) = sy-index - 1.
+      DO cols TIMES.
+        DATA(col) = sy-index - 1.
+        n = 0.
+        DO 9 TIMES.
+          CASE sy-index.
+            WHEN 1.
+              DATA(r) = row.
+              DATA(c) = col.
+            WHEN 2.
+              r = row.
+              c = col + 1.
+            WHEN 3.
+              r = row.
+              c = col - 1.
+            WHEN 4.
+              r = row + 1.
+              c = col.
+            WHEN 5.
+              r = row + 1.
+              c = col + 1.
+            WHEN 6.
+              r = row + 1.
+              c = col - 1.
+            WHEN 7.
+              r = row - 1.
+              c = col.
+            WHEN 8.
+              r = row - 1.
+              c = col + 1.
+            WHEN 9.
+              r = row - 1.
+              c = col - 1.
+          ENDCASE.
+          IF r BETWEEN 0 AND rows - 1 AND c BETWEEN 0 AND cols - 1.
+            IF substring( val = field off = r * cols + c len = 1 ) = `*`.
+              IF r = row AND c = col.
+                n = 9.
+                EXIT.
+              ELSE.
+                n = n + 1.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDDO.
+        IF n = 0.
+          res = res && ` `.
+        ELSEIF n = 9.
+          res = res && `*`.
         ELSE.
-          output_char = input_char.
+          res = res && n.
         ENDIF.
-        output_row = |{ output_row }{ COND #( WHEN output_char IS INITIAL THEN ` `
-                                              ELSE output_char ) }|.
       ENDDO.
-      APPEND output_row TO result.
-    ENDLOOP.
+    ENDDO.
+
+    DO rows TIMES.
+      INSERT substring( val = res off = ( sy-index - 1 ) * cols len = cols ) INTO TABLE result.
+    ENDDO.
+
   ENDMETHOD.
 ENDCLASS.
