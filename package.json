@@ -15,10 +15,10 @@
     "url": "git+https://github.com/larshp/exercism-test.git"
   },
   "dependencies": {
-    "@abaplint/transpiler-cli": "^2.0.35",
-    "@abaplint/transpiler": "^2.0.35",
+    "@abaplint/transpiler-cli": "^2.0.36",
+    "@abaplint/transpiler": "^2.0.36",
     "@abaplint/cli": "^2.91.2",
-    "@abaplint/runtime": "^2.0.35"
+    "@abaplint/runtime": "^2.0.36"
   },
   "author": "",
   "license": "ISC",
