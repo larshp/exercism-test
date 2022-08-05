@@ -5,22 +5,12 @@ CLASS zcl_itab_nesting DEFINITION
 
   PUBLIC SECTION.
 
-    TYPES: BEGIN OF artists_type,
-             artist_id   TYPE string,
-             artist_name TYPE string,
-           END OF artists_type.
-    TYPES artists TYPE STANDARD TABLE OF artists_type WITH KEY artist_id.
     TYPES: BEGIN OF albums_type,
              artist_id  TYPE string,
-             album_id   TYPE string,
-             album_name TYPE string,
            END OF albums_type.
     TYPES albums TYPE STANDARD TABLE OF albums_type WITH KEY artist_id album_id.
     TYPES: BEGIN OF songs_type,
              artist_id TYPE string,
-             album_id  TYPE string,
-             song_id   TYPE string,
-             song_name TYPE string,
            END OF songs_type.
     TYPES songs TYPE STANDARD TABLE OF songs_type WITH KEY artist_id album_id song_id.
 
@@ -41,13 +31,7 @@ CLASS zcl_itab_nesting DEFINITION
            END OF artist_album_nested_type.
     TYPES nested_data TYPE STANDARD TABLE OF artist_album_nested_type WITH KEY artist_id.
 
-    METHODS perform_nesting
-      IMPORTING
-        artists            TYPE artists
-        albums             TYPE albums
-        songs              TYPE songs
-      RETURNING
-        VALUE(nested_data) TYPE nested_data.
+    METHODS perform_nesting.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -59,31 +43,11 @@ CLASS zcl_itab_nesting IMPLEMENTATION.
 
   METHOD perform_nesting.
 
-    LOOP AT artists REFERENCE INTO DATA(artist).
-      APPEND INITIAL LINE TO nested_data REFERENCE INTO DATA(nested_lvl1).
-      nested_lvl1->artist_id = artist->artist_id.
-      nested_lvl1->artist_name = artist->artist_name.
-
-      LOOP AT albums REFERENCE INTO DATA(album)
-                              WHERE artist_id = artist->artist_id.
-        APPEND INITIAL LINE TO nested_lvl1->albums REFERENCE INTO DATA(nested_lvl2).
-        nested_lvl2->album_id = album->album_id.
-        nested_lvl2->album_name = album->album_name.
-
-        LOOP AT songs REFERENCE INTO DATA(song)
-                               WHERE artist_id = album->artist_id
-                                 AND album_id = album->album_id.
-
-          APPEND INITIAL LINE TO nested_lvl2->songs REFERENCE INTO DATA(nested_lvl3).
-          nested_lvl3->song_id = song->song_id.
-          nested_lvl3->song_name = song->song_name.
-
-
-        ENDLOOP.
-
-      ENDLOOP.
-
-    ENDLOOP.
+    DATA(sdf) = VALUE zcl_itab_nesting=>nested_data(
+                 ( artist_id   = '1'
+                   albums      = VALUE #( (
+                      album_id   = '1'
+                      songs      = VALUE #( ) ) ) ) ).
 
   ENDMETHOD.
 
