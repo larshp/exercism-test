@@ -52,12 +52,13 @@ CLASS zcl_itab_combination IMPLEMENTATION.
 * | [<-()] COMBINED_DATA                  TYPE        COMBINED_DATA
 * +--------------------------------------------------------------------------------------</SIGNATURE>
   METHOD perform_combination.
-    combined_data[] = alphas[].
-    LOOP AT combined_data ASSIGNING FIELD-SYMBOL(<fs_comb>).
-      DATA(lv_index) = sy-tabix.
-      <fs_comb>-colx = |{ <fs_comb>-colx }{ nums[ lv_index ]-col1 }|.
-      <fs_comb>-coly = |{ <fs_comb>-coly }{ nums[ lv_index ]-col2 }|.
-      <fs_comb>-colz = |{ <fs_comb>-colz }{ nums[ lv_index ]-col3 }|.
-    ENDLOOP.
+    combined_data = VALUE combined_data(
+      FOR ls_alpha IN alphas INDEX INTO lv_index
+      FOR ls_num IN nums FROM lv_index TO lv_index
+      LET ls_comb = VALUE combined_data_type(
+      colx = |{ ls_alpha-cola }| & |{ ls_num-col1 }|
+      coly = |{ ls_alpha-colb }| & |{ ls_num-col2 }|
+      colz = |{ ls_alpha-colc }| & |{ ls_num-col3 }| )
+      IN ( CORRESPONDING #( ls_comb ) ) ).
   ENDMETHOD.
 ENDCLASS.
