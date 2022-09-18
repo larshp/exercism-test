@@ -33,24 +33,32 @@ ENDCLASS.
 
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
-    LOOP AT initial_numbers REFERENCE INTO DATA(initial_number)
-        GROUP BY ( key = initial_number->group  count = GROUP SIZE )
-        ASCENDING
-        REFERENCE INTO DATA(group_key).
 
-      APPEND INITIAL LINE TO aggregated_data REFERENCE INTO DATA(aggregated_item).
-      aggregated_item->group = group_key->key.
-      aggregated_item->count = group_key->count.
-      aggregated_item->min = 9999999.
-      LOOP AT GROUP group_key REFERENCE INTO DATA(group_item).
-        aggregated_item->sum = aggregated_item->sum + group_item->number.
-        aggregated_item->min = nmin( val1 = aggregated_item->min
-                                     val2 = group_item->number ).
-        aggregated_item->max = nmax( val1 = aggregated_item->max
-                                     val2 = group_item->number ).
-      ENDLOOP.
-      aggregated_item->average = aggregated_item->sum / aggregated_item->count.
-    ENDLOOP.
+    aggregated_data =  VALUE aggregated_data( BASE aggregated_data
+                                              FOR GROUPS ls_group OF ls_numgrp IN initial_numbers
+                                                  GROUP BY ( group = ls_numgrp-group  count = GROUP SIZE )
+                                                   ASCENDING
+                                            ( REDUCE aggregated_data_type(
+                                              INIT ls_agr_data = VALUE aggregated_data_type( )
+                                               FOR ls_grp_data IN GROUP ls_group
+                                              NEXT ls_agr_data = VALUE #(
+                                                                      group = ls_group-group
+                                                                      count = ls_group-count
+                                                                      sum = REDUCE i( INIT lv_sum = 0
+                                                                                       FOR lv_cal_sum IN GROUP ls_group
+                                                                                      NEXT lv_sum = lv_sum + lv_cal_sum-number )
+                                                                      max = REDUCE i( INIT lv_max = 0
+                                                                                       FOR lv_max_num IN GROUP ls_group
+                                                                                      NEXT lv_max = nmax( val1 = lv_max
+                                                                                                          val2 = lv_max_num-number ) )
+                                                                      min = REDUCE i( INIT lv_min = 101
+                                                                                       FOR lv_min_num IN GROUP ls_group
+                                                                                      NEXT lv_min = nmin( val1 = lv_min
+                                                                                                          val2 = lv_min_num-number ) )
+                                                                      average = ls_agr_data-sum / ls_agr_data-count
+                                                                     )
+
+                                           ) ) ).
 
   ENDMETHOD.
 ENDCLASS.
