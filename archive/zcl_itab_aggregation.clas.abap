@@ -34,44 +34,18 @@ ENDCLASS.
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
 
-    DATA icount TYPE i.
-    TYPES: BEGIN OF group_type,
-             group TYPE group,
-             size  TYPE i,
-           END OF group_type,
-           group_types TYPE STANDARD TABLE OF group_type WITH EMPTY KEY.
-    DATA temp_numbers TYPE initial_numbers.
-    temp_numbers[] = initial_numbers[].
-    SORT temp_numbers BY group ASCENDING.
-    DATA last_group TYPE c.
-    DATA group_numbers TYPE group_types.
-    LOOP AT temp_numbers INTO DATA(initial_number).
-      IF last_group <> initial_number-group.
-        APPEND INITIAL LINE TO group_numbers  ASSIGNING FIELD-SYMBOL(<group_number>).
-        <group_number>-group = initial_number-group.
-        <group_number>-size = 1.
-      ELSE.
-        <group_number>-size += 1.
-      ENDIF.
-      last_group = initial_number-group.
-    ENDLOOP.
+    LOOP AT initial_numbers ASSIGNING FIELD-SYMBOL(<number>)
+    GROUP BY ( group = <number>-group
+               count = GROUP SIZE )
+    ASSIGNING FIELD-SYMBOL(<groups>).
 
-    LOOP AT group_numbers INTO DATA(group_number).
-      APPEND INITIAL LINE TO aggregated_data ASSIGNING FIELD-SYMBOL(<aggregated_data>).
-      <aggregated_data>-group = group_number-group.
-      <aggregated_data>-count = group_number-size.
-      icount = 0.
-      LOOP AT temp_numbers INTO DATA(ls_member) WHERE group = group_number-group.
-        <aggregated_data>-sum += ls_member-number.
-        IF icount = 0.
-          <aggregated_data>-min = <aggregated_data>-max = ls_member-number.
-        ELSE.
-          <aggregated_data>-min = COND i( WHEN ls_member-number < <aggregated_data>-min THEN ls_member-number ELSE <aggregated_data>-min ).
-          <aggregated_data>-max = COND i( WHEN ls_member-number > <aggregated_data>-max THEN ls_member-number ELSE <aggregated_data>-max ).
-        ENDIF.
-        icount += 1.
+      INSERT VALUE #( group = <groups>-group
+count = <groups>-count
+) INTO TABLE aggregated_data REFERENCE INTO DATA(aggregated_data_row).
+
+      LOOP AT GROUP <groups> ASSIGNING FIELD-SYMBOL(<group>).
       ENDLOOP.
-      <aggregated_data>-average = <aggregated_data>-sum / <aggregated_data>-count.
+
     ENDLOOP.
 
   ENDMETHOD.
