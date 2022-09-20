@@ -34,31 +34,45 @@ ENDCLASS.
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
 
-    aggregated_data =  VALUE aggregated_data( BASE aggregated_data
-                                              FOR GROUPS ls_group OF ls_numgrp IN initial_numbers
-                                                  GROUP BY ( group = ls_numgrp-group  count = GROUP SIZE )
-                                                   ASCENDING
-                                            ( REDUCE aggregated_data_type(
-                                              INIT ls_agr_data = VALUE aggregated_data_type( )
-                                               FOR ls_grp_data IN GROUP ls_group
-                                              NEXT ls_agr_data = VALUE #(
-                                                                      group = ls_group-group
-                                                                      count = ls_group-count
-                                                                      sum = REDUCE i( INIT lv_sum = 0
-                                                                                       FOR lv_cal_sum IN GROUP ls_group
-                                                                                      NEXT lv_sum = lv_sum + lv_cal_sum-number )
-                                                                      max = REDUCE i( INIT lv_max = 0
-                                                                                       FOR lv_max_num IN GROUP ls_group
-                                                                                      NEXT lv_max = nmax( val1 = lv_max
-                                                                                                          val2 = lv_max_num-number ) )
-                                                                      min = REDUCE i( INIT lv_min = 101
-                                                                                       FOR lv_min_num IN GROUP ls_group
-                                                                                      NEXT lv_min = nmin( val1 = lv_min
-                                                                                                          val2 = lv_min_num-number ) )
-                                                                      average = ls_agr_data-sum / ls_agr_data-count
-                                                                     )
+    DATA icount TYPE i.
+    TYPES: BEGIN OF group_type,
+             group TYPE group,
+             size  TYPE i,
+           END OF group_type,
+           group_types TYPE STANDARD TABLE OF group_type WITH EMPTY KEY.
+    DATA temp_numbers TYPE initial_numbers.
+    temp_numbers[] = initial_numbers[].
+    SORT temp_numbers BY group ASCENDING.
+    DATA last_group TYPE c.
+    DATA group_numbers TYPE group_types.
+    LOOP AT temp_numbers INTO DATA(initial_number).
+      IF last_group <> initial_number-group.
+        APPEND INITIAL LINE TO group_numbers  ASSIGNING FIELD-SYMBOL(<group_number>).
+        <group_number>-group = initial_number-group.
+        <group_number>-size = 1.
+      ELSE.
+        <group_number>-size += 1.
+      ENDIF.
+      last_group = initial_number-group.
+    ENDLOOP.
 
-                                           ) ) ).
+    LOOP AT group_numbers INTO DATA(group_number).
+      APPEND INITIAL LINE TO aggregated_data ASSIGNING FIELD-SYMBOL(<aggregated_data>).
+      <aggregated_data>-group = group_number-group.
+      <aggregated_data>-count = group_number-size.
+      icount = 0.
+      LOOP AT temp_numbers INTO DATA(ls_member) WHERE group = group_number-group.
+        <aggregated_data>-sum += ls_member-number.
+        IF icount = 0.
+          <aggregated_data>-min = <aggregated_data>-max = ls_member-number.
+        ELSE.
+          <aggregated_data>-min = COND i( WHEN ls_member-number < <aggregated_data>-min THEN ls_member-number ELSE <aggregated_data>-min ).
+          <aggregated_data>-max = COND i( WHEN ls_member-number > <aggregated_data>-max THEN ls_member-number ELSE <aggregated_data>-max ).
+        ENDIF.
+        icount += 1.
+      ENDLOOP.
+      <aggregated_data>-average = <aggregated_data>-sum / <aggregated_data>-count.
+    ENDLOOP.
 
   ENDMETHOD.
 ENDCLASS.
