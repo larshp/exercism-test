@@ -55,9 +55,12 @@ CLASS zcl_itab_aggregation IMPLEMENTATION.
       aggregated->max = COND #( WHEN initial_number->number > aggregated->max
                                   THEN initial_number->number
                                 ELSE aggregated->max ).
-      aggregated->average = aggregated->average + ( initial_number->number - aggregated->average ) / aggregated->count.
 
       CLEAR aggregated.
+    ENDLOOP.
+
+    LOOP AT aggregated_data REFERENCE INTO aggregated.
+      aggregated->average = aggregated->sum / aggregated->count.
     ENDLOOP.
 
   ENDMETHOD.
