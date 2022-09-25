@@ -34,33 +34,33 @@ ENDCLASS.
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
 
-    LOOP AT initial_numbers REFERENCE INTO DATA(initial_number).
-      TRY.
-          DATA(aggregated) = REF #( aggregated_data[ group = initial_number->group ] ).
-
-        CATCH cx_sy_itab_line_not_found.
-          INSERT INITIAL LINE INTO TABLE aggregated_data REFERENCE INTO aggregated.
-          aggregated->group = initial_number->group.
-          aggregated->min = initial_number->number.
-          aggregated->max = initial_number->number.
-          aggregated->average = initial_number->number.
-      ENDTRY.
-
-      aggregated->count = aggregated->count + 1.
-      aggregated->sum = aggregated->sum + initial_number->number.
-      aggregated->min = COND #( WHEN initial_number->number < aggregated->min
-                                  THEN initial_number->number
-                                ELSE aggregated->min ).
-
-      aggregated->max = COND #( WHEN initial_number->number > aggregated->max
-                                  THEN initial_number->number
-                                ELSE aggregated->max ).
-
-      CLEAR aggregated.
+    LOOP AT initial_numbers ASSIGNING FIELD-SYMBOL(<fs_ini_numbers>).
+      IF line_exists( aggregated_data[ group = <fs_ini_numbers>-group ] ).
+        aggregated_data[ group = <fs_ini_numbers>-group ]-count = aggregated_data[ group = <fs_ini_numbers>-group ]-count + 1.
+        aggregated_data[ group = <fs_ini_numbers>-group ]-sum = aggregated_data[ group =
+            <fs_ini_numbers>-group ]-sum + <fs_ini_numbers>-number.
+        aggregated_data[ group = <fs_ini_numbers>-group ]-min = COND #(
+          WHEN <fs_ini_numbers>-number < aggregated_data[ group = <fs_ini_numbers>-group ]-min 
+          THEN <fs_ini_numbers>-number
+          ELSE aggregated_data[ group = <fs_ini_numbers>-group ]-min
+          ).
+        aggregated_data[ group = <fs_ini_numbers>-group ]-max = COND #(
+          WHEN <fs_ini_numbers>-number > aggregated_data[ group = <fs_ini_numbers>-group ]-max 
+          THEN <fs_ini_numbers>-number
+          ELSE aggregated_data[ group = <fs_ini_numbers>-group ]-max
+          ).
+      ELSE.
+        INSERT VALUE #(
+          group = <fs_ini_numbers>-group
+          count = 1
+          sum = <fs_ini_numbers>-number
+          min = <fs_ini_numbers>-number
+          max = <fs_ini_numbers>-number
+        ) INTO TABLE aggregated_data.
+      ENDIF.
     ENDLOOP.
-
-    LOOP AT aggregated_data REFERENCE INTO aggregated.
-      aggregated->average = aggregated->sum / aggregated->count.
+    LOOP AT aggregated_data ASSIGNING FIELD-SYMBOL(<fs_agg_data>).
+      <fs_agg_data>-average = <fs_agg_data>-sum / <fs_agg_data>-count.
     ENDLOOP.
 
   ENDMETHOD.
