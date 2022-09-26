@@ -34,19 +34,22 @@ ENDCLASS.
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
 
-    LOOP AT initial_numbers ASSIGNING FIELD-SYMBOL(<number>)
-    GROUP BY ( group = <number>-group
-               count = GROUP SIZE )
-    ASSIGNING FIELD-SYMBOL(<groups>).
-
-      INSERT VALUE #( group = <groups>-group
-count = <groups>-count
-) INTO TABLE aggregated_data REFERENCE INTO DATA(aggregated_data_row).
-
-      LOOP AT GROUP <groups> ASSIGNING FIELD-SYMBOL(<group>).
-      ENDLOOP.
-
-    ENDLOOP.
+    aggregated_data = VALUE #(
+      FOR GROUPS grp OF rec IN initial_numbers
+      GROUP BY ( group = rec-group cnt = GROUP SIZE )
+      LET res = REDUCE aggregated_data_type( INIT tmp = VALUE aggregated_data_type( min = initial_numbers[ group = grp-group ]-number )
+                FOR rec2 IN GROUP grp
+                NEXT tmp-sum = tmp-sum + rec2-number
+                   tmp-min = COND #( WHEN tmp-min > rec2-number THEN rec2-number ELSE tmp-min )
+                   tmp-max = COND #( WHEN tmp-max < rec2-number THEN rec2-number ELSE tmp-max )
+                ) IN
+                ( group = grp-group
+                  count = grp-cnt
+                  sum = res-sum
+                  min = res-min
+                  max = res-max
+                  average = res-sum / grp-cnt )
+      ).
 
   ENDMETHOD.
 ENDCLASS.
