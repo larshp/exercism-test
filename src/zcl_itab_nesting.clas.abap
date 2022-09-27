@@ -59,32 +59,13 @@ CLASS zcl_itab_nesting IMPLEMENTATION.
 
   METHOD perform_nesting.
 
-    LOOP AT artists REFERENCE INTO DATA(artist).
-      APPEND INITIAL LINE TO nested_data REFERENCE INTO DATA(nested_lvl1).
-      nested_lvl1->artist_id = artist->artist_id.
-      nested_lvl1->artist_name = artist->artist_name.
-
-      LOOP AT albums REFERENCE INTO DATA(album)
-                              WHERE artist_id = artist->artist_id.
-        APPEND INITIAL LINE TO nested_lvl1->albums REFERENCE INTO DATA(nested_lvl2).
-        nested_lvl2->album_id = album->album_id.
-        nested_lvl2->album_name = album->album_name.
-
-        LOOP AT songs REFERENCE INTO DATA(song)
-                               WHERE artist_id = album->artist_id
-                                 AND album_id = album->album_id.
-
-          APPEND INITIAL LINE TO nested_lvl2->songs REFERENCE INTO DATA(nested_lvl3).
-          nested_lvl3->song_id = song->song_id.
-          nested_lvl3->song_name = song->song_name.
-
-
-        ENDLOOP.
-
-      ENDLOOP.
+    LOOP AT songs ASSIGNING FIELD-SYMBOL(<songs>)
+      GROUP BY ( artist = <songs>-artist_id
+                 album = <songs>-album_id )
+      ASCENDING
+      ASSIGNING FIELD-SYMBOL(<group>).
 
     ENDLOOP.
-
   ENDMETHOD.
 
 ENDCLASS.
