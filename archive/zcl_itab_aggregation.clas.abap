@@ -33,7 +33,6 @@ ENDCLASS.
 
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
-
     aggregated_data = VALUE #(
       FOR GROUPS grp OF rec IN initial_numbers
       GROUP BY ( group = rec-group cnt = GROUP SIZE )
@@ -52,4 +51,5 @@ CLASS zcl_itab_aggregation IMPLEMENTATION.
       ).
 
   ENDMETHOD.
+
 ENDCLASS.

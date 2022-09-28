@@ -59,13 +59,10 @@ CLASS zcl_itab_nesting IMPLEMENTATION.
 
   METHOD perform_nesting.
 
-    LOOP AT songs ASSIGNING FIELD-SYMBOL(<songs>)
-      GROUP BY ( artist = <songs>-artist_id
-                 album = <songs>-album_id )
-      ASCENDING
-      ASSIGNING FIELD-SYMBOL(<group>).
-
+    LOOP AT artists REFERENCE INTO DATA(artist).
+      APPEND CORRESPONDING #( artist->* ) TO nested_data.
     ENDLOOP.
+    WRITE '@KERNEL console.dir(nested_data.array()[0]);'.
   ENDMETHOD.
 
 ENDCLASS.
