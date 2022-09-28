@@ -60,16 +60,9 @@ CLASS zcl_itab_nesting IMPLEMENTATION.
   METHOD perform_nesting.
 
     LOOP AT artists REFERENCE INTO DATA(artist).
-      APPEND CORRESPONDING #( artist->* ) TO nested_data REFERENCE INTO DATA(nested_artist).
-      LOOP AT albums REFERENCE INTO DATA(album) WHERE artist_id = artist->artist_id.
-        APPEND CORRESPONDING #( album->* ) TO nested_artist->albums REFERENCE INTO DATA(nested_album).  " <<< The error occurs here
-        LOOP AT songs REFERENCE INTO DATA(song) WHERE artist_id = artist->artist_id AND album_id = album->album_id.
-          APPEND CORRESPONDING #( song->* ) TO nested_album->songs.
-        ENDLOOP.
-      ENDLOOP.
+      APPEND CORRESPONDING #( artist->* ) TO nested_data.
     ENDLOOP.
-
-
+    WRITE '@KERNEL console.dir(nested_data.array()[0]);'.
   ENDMETHOD.
 
 ENDCLASS.
