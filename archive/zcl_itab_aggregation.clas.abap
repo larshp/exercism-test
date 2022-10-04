@@ -33,22 +33,29 @@ ENDCLASS.
 
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
-    aggregated_data = VALUE #(
-      FOR GROUPS grp OF rec IN initial_numbers
-      GROUP BY ( group = rec-group cnt = GROUP SIZE )
-      LET res = REDUCE aggregated_data_type( INIT tmp = VALUE aggregated_data_type( min = initial_numbers[ group = grp-group ]-number )
-                FOR rec2 IN GROUP grp
-                NEXT tmp-sum = tmp-sum + rec2-number
-                   tmp-min = COND #( WHEN tmp-min > rec2-number THEN rec2-number ELSE tmp-min )
-                   tmp-max = COND #( WHEN tmp-max < rec2-number THEN rec2-number ELSE tmp-max )
-                ) IN
-                ( group = grp-group
-                  count = grp-cnt
-                  sum = res-sum
-                  min = res-min
-                  max = res-max
-                  average = res-sum / grp-cnt )
-      ).
+    " add solution here
+    if lines( initial_numbers ) gt 0.
+      data(last_grp) = ' '.
+      data(zwerg) = value aggregated_data_type( min = 200 ).
+      data(sorted) = initial_numbers.
+      sort sorted by group.
+      else.
+        return.
+      endif.
+      loop at value initial_numbers( base sorted ( group = ' ' ) )
+          assigning field-symbol(<grp>).
+          if <grp>-group ne last_grp and last_grp ne space.
+             zwerg-group = last_grp.
+             zwerg-average = zwerg-sum / zwerg-count.
+             append zwerg to aggregated_data.
+             zwerg = value #( min = 200 ).
+          endif.
+           last_grp = <grp>-group.
+           zwerg-sum =  zwerg-sum + <grp>-number.
+           zwerg-count = zwerg-count + 1.
+           zwerg-min = nmin( val1 = zwerg-min val2 = <grp>-number ).
+           zwerg-max = nmax( val1 = zwerg-max val2 = <grp>-number ).
+      endloop.
 
   ENDMETHOD.
 
