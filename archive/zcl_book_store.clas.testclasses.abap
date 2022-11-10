@@ -8,9 +8,6 @@ CLASS ltcl_book_store DEFINITION FINAL FOR TESTING
 
     METHODS setup.
 
-    METHODS only_a_single_book FOR TESTING RAISING cx_static_check.
-    METHODS two_of_the_same_book FOR TESTING RAISING cx_static_check.
-    METHODS empty_basket FOR TESTING RAISING cx_static_check.
     METHODS two_different_books FOR TESTING RAISING cx_static_check.
     METHODS three_different_books FOR TESTING RAISING cx_static_check.
     METHODS four_different_books FOR TESTING RAISING cx_static_check.
@@ -44,24 +41,6 @@ CLASS ltcl_book_store IMPLEMENTATION.
 
   METHOD setup.
     cut = NEW #( ).
-  ENDMETHOD.
-
-  METHOD only_a_single_book.
-    cl_abap_unit_assert=>assert_equals(
-      exp = 8
-      act = cut->calculate_total( VALUE #( ( 1 ) ) ) ).
-  ENDMETHOD.
-
-  METHOD two_of_the_same_book.
-    cl_abap_unit_assert=>assert_equals(
-      exp = 16
-      act = cut->calculate_total( VALUE #( ( 2 ) ( 2 ) ) ) ).
-  ENDMETHOD.
-
-  METHOD empty_basket.
-    cl_abap_unit_assert=>assert_equals(
-      exp = 0
-      act = cut->calculate_total( VALUE #( ) ) ).
   ENDMETHOD.
 
   METHOD two_different_books.

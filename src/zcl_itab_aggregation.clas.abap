@@ -33,24 +33,22 @@ ENDCLASS.
 
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
-    " add solution here
-    aggregated_data = VALUE #(
-      FOR GROUPS grp OF rec IN initial_numbers
-      GROUP BY ( group = rec-group cnt = GROUP SIZE )
-      LET res = REDUCE aggregated_data_type( INIT tmp = VALUE aggregated_data_type( min = initial_numbers[ group = grp-group ]-number )
-                FOR rec2 IN GROUP grp
-                NEXT tmp-sum = tmp-sum + rec2-number
-                   tmp-min = COND #( WHEN tmp-min > rec2-number THEN rec2-number ELSE tmp-min )
-                   tmp-max = COND #( WHEN tmp-max < rec2-number THEN rec2-number ELSE tmp-max )
-                ) IN
-                ( group = grp-group
-                  count = grp-cnt
-                  sum = res-sum
-                  min = res-min
-                  max = res-max
-                  average = res-sum / grp-cnt )
-      ).
 
+    LOOP AT initial_numbers INTO DATA(number)
+        GROUP BY number-group
+        ASSIGNING FIELD-SYMBOL(<group>).
+
+      DATA(group_members) = VALUE initial_numbers( FOR member IN GROUP <group> ( member ) ).
+
+      aggregated_data = VALUE #( BASE aggregated_data
+                               ( group = group_members[ 1 ]-group
+                                 count = lines( group_members )
+                                 sum = REDUCE i( INIT s = 0 FOR g IN group_members NEXT s = s + g-number )
+                                 min = REDUCE i( INIT min = 1000000 FOR g IN group_members NEXT min = COND #( WHEN g-number < min THEN g-number ELSE min ) )
+                                 max = REDUCE i( INIT max = 0 FOR g IN group_members NEXT max = COND #( WHEN g-number > max THEN g-number ELSE max ) )
+                                 average = REDUCE i( INIT s = 0 FOR g IN group_members NEXT s = s + g-number ) / lines( group_members )
+                                 ) ).
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.
