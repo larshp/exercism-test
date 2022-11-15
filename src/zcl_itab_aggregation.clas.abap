@@ -34,21 +34,30 @@ ENDCLASS.
 CLASS zcl_itab_aggregation IMPLEMENTATION.
   METHOD perform_aggregation.
 
-    LOOP AT initial_numbers INTO DATA(number)
-        GROUP BY number-group
-        ASSIGNING FIELD-SYMBOL(<group>).
+    aggregated_data = REDUCE aggregated_data(
+      INIT aggregated = VALUE aggregated_data( )
+           data = VALUE aggregated_data_type( )
+      FOR GROUPS <group_key> OF <wa> IN initial_numbers
+        GROUP BY <wa>-group ASCENDING
+      NEXT data = VALUE #(
+             group = <group_key>
+             count = REDUCE i( INIT count = 0
+                     FOR m IN GROUP <group_key>
+                     NEXT count += 1 )
+             sum = REDUCE i( INIT sum = 0
+                     FOR m IN GROUP <group_key>
+                     NEXT sum += m-number )
+             max = REDUCE i( INIT max = 0
+                     FOR m IN GROUP <group_key>
+                     NEXT max = nmax( val1 = max
+                                      val2 = m-number ) )
+             min = REDUCE i( INIT min = 1000000000
+                     FOR m IN GROUP <group_key>
+                     NEXT min = nmin( val1 = min
+                                      val2 = m-number ) )
+             average = data-sum / data-count )
+           aggregated = VALUE #( BASE aggregated ( data ) ) ).
 
-      DATA(group_members) = VALUE initial_numbers( FOR member IN GROUP <group> ( member ) ).
-
-      aggregated_data = VALUE #( BASE aggregated_data
-                               ( group = group_members[ 1 ]-group
-                                 count = lines( group_members )
-                                 sum = REDUCE i( INIT s = 0 FOR g IN group_members NEXT s = s + g-number )
-                                 min = REDUCE i( INIT min = 1000000 FOR g IN group_members NEXT min = COND #( WHEN g-number < min THEN g-number ELSE min ) )
-                                 max = REDUCE i( INIT max = 0 FOR g IN group_members NEXT max = COND #( WHEN g-number > max THEN g-number ELSE max ) )
-                                 average = REDUCE i( INIT s = 0 FOR g IN group_members NEXT s = s + g-number ) / lines( group_members )
-                                 ) ).
-    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.
