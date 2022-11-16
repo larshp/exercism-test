@@ -59,16 +59,26 @@ CLASS zcl_itab_nesting IMPLEMENTATION.
 
   METHOD perform_nesting.
 
-    LOOP AT artists REFERENCE INTO DATA(artist).
-      APPEND CORRESPONDING #( artist->* ) TO nested_data REFERENCE INTO DATA(nested_artist).
-      LOOP AT albums REFERENCE INTO DATA(album) WHERE artist_id = artist->artist_id.
-        APPEND CORRESPONDING #( album->* ) TO nested_artist->albums REFERENCE INTO DATA(nested_album).  " <<< The error occurs here
-        LOOP AT songs REFERENCE INTO DATA(song) WHERE artist_id = artist->artist_id AND album_id = album->album_id.
-          APPEND CORRESPONDING #( song->* ) TO nested_album->songs.
+    LOOP AT artists ASSIGNING FIELD-SYMBOL(<wa_artist>).
+      INSERT VALUE #( artist_id   = <wa_artist>-artist_id
+                      artist_name = <wa_artist>-artist_name )
+        INTO TABLE nested_data ASSIGNING FIELD-SYMBOL(<wa_nested>).
+
+      LOOP AT albums ASSIGNING FIELD-SYMBOL(<wa_album>)
+        WHERE artist_id = <wa_nested>-artist_id.
+        INSERT VALUE #( album_id   = <wa_album>-album_id
+                        album_name = <wa_album>-album_name )
+          INTO TABLE <wa_nested>-albums ASSIGNING FIELD-SYMBOL(<wa_nested_album>).
+
+        LOOP AT songs ASSIGNING FIELD-SYMBOL(<wa_song>)
+          WHERE artist_id = <wa_nested>-artist_id AND
+                album_id  = <wa_album>-album_id.
+          INSERT VALUE #( song_id   = <wa_song>-song_id
+                          song_name = <wa_song>-song_name )
+            INTO TABLE <wa_nested_album>-songs.
         ENDLOOP.
       ENDLOOP.
     ENDLOOP.
-
 
   ENDMETHOD.
 
