@@ -167,11 +167,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "commented_code": {
-      "exclude": [],
-      "severity": "Error",
-      "allowIncludeInFugr": true
-    },
+    "commented_code": false,
     "constant_classes": {
       "exclude": [],
       "severity": "Error",
