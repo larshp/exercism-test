@@ -88,11 +88,8 @@ CLASS zcl_book_store IMPLEMENTATION.
         ENDDO.
       ENDLOOP.
 
-      WRITE '@KERNEL console.dir("SDFDS");'.
-      WRITE '@KERNEL console.dir(new_total);'.
-      WRITE '@KERNEL console.dir(total);'.
-      total = nmin( val1 = total val2 = new_total ).
-      WRITE '@KERNEL console.dir(total);'.
+      total = nmin( val1 = total
+                    val2 = new_total ).
       max_grp -= 1.
     ENDDO.
 
