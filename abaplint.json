@@ -20,7 +20,7 @@
     }
   ],
   "syntax": {
-    "version": "v756",
+    "version": "open-abap",
     "errorNamespace": "^(Z|Y|LCL_|TY_|LIF_)",
     "globalConstants": [],
     "globalMacros": []
@@ -49,6 +49,7 @@
       "exclude": [],
       "severity": "Error",
       "define": true,
+      "exportToMemory": true,
       "statics": true,
       "defaultKey": true,
       "break": true,
